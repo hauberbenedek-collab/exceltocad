@@ -1,37 +1,30 @@
-# exceltocad
-Excel táblázatból (méretek, tűrések) automatikusan legenerálja egy alkatrész (pl. fogaskerék) 3D-s modelljét.
-cd ~/Documents/GitHub/egyetem/exceltocad
-cat > README.md << 'EOF'
-# Excel-ből fogaskerék 3D modell generátor
+# Fogaskerék generátor Excelből
 
-Python script FreeCAD-hez, amely egy Excel táblázatból (méretek, tűrések) automatikusan legenerálja egyenes fogazatú, evolvens fogprofilú fogaskerekek 3D modelljét. A kimenet FreeCAD (`.FCStd`) és STEP (`.step`) fájl, amelyet bármilyen CAD program megnyit.
+Ez a program egy Excel táblázatból automatikusan elkészíti fogaskerekek 3D modelljét. A táblázatba beírod a méreteket (például hány fogú legyen a kerék, mekkora legyen a furata), a program pedig legenerálja a modellt FreeCAD-ben.
 
 Egyetemi projektfeladat, Széchenyi István Egyetem, mechatronikai mérnöki BSc. Készítette: Hauber Benedek.
 
-## Képek
-
-
+![kerek_20](dokumentacio/kerek20.webp)
+![kerek_30](dokumentacio/kerek30.webp)
+![kerek_16](dokumentacio/kerek16.webp)
 
 ## Hogyan működik
 
-```
-Excel (adat/fogaskerekek.xlsx)
-        |  forras/excel_olvaso.py: beolvasás, ellenőrzés, számítások
-        v
-JSON (kimenet/fogaskerekek.json)
-        |  forras/fogaskerek_generator.py (FreeCAD): fogprofil, kihúzás, furat
-        v
-3D modell (kimenet/<nev>.FCStd és kimenet/<nev>.step)
-```
+A program három lépésből áll:
 
-A projekt két részre van bontva, mert a FreeCAD saját Pythonja nem tartalmazza az `openpyxl` csomagot. Az Excel beolvasása ezért a rendes Pythonnal fut, és JSON fájlban adja át az adatokat a FreeCAD scriptnek.
+1. **Excel**: az `adat/fogaskerekek.xlsx` fájlban soronként egy fogaskerék adatai vannak. -- lásd dokumentáció mappában példa excel kép.
+2. **Beolvasás** (`forras/excel_olvaso.py`): beolvassa az Excelt, ellenőrzi az adatokat (például nem lehet túl kevés a fog), kiszámolja a szükséges méreteket, és elmenti őket egy JSON fájlba (`kimenet/fogaskerekek.json`).
+3. **Modellezés** (`forras/fogaskerek_generator.py`): FreeCAD-ben a JSON adatokból elkészíti a fogaskereket, és elmenti `.FCStd` és `.step` fájlba.
 
-## Követelmények
+Azért van két külön rész, mert a FreeCAD saját Pythonja nem ismeri az Excel olvasó csomagot (`openpyxl`). Így az Excel részt a normál Python futtatja, a FreeCAD pedig csak a JSON fájlt olvassa.
 
-- FreeCAD (tesztelve: 1.1.4)
-- Python 3
-- `openpyxl` (a `requirements.txt` tartalmazza)
-- Tesztelt rendszer: macOS
+## Mi kell hozzá
+
+- FreeCAD (1.1.4-es verzióval próbáltam)
+- Python
+- az `openpyxl` csomag (benne van a `requirements.txt`-ben)
+
+Csak macOS-en teszteltem.
 
 ## Telepítés
 
@@ -44,74 +37,63 @@ pip install -r requirements.txt
 ```
 
 ## Használat
-
-1. **Az Excel kitöltése.** A bemeneti fájl az `adat/fogaskerekek.xlsx`. Egy sor egy fogaskerék. Minta fájlt a `python3 minta_excel_keszito.py` paranccsal lehet készíteni.
-2. **Az Excel beolvasása és ellenőrzése** (a projekt gyökeréből, aktív `.venv`-vel):
+## !!Nagyon fontos a nevek helyessége, ha bármit is átnevezel a kód nem biztos hogy 100%-osan működik!!
+1. Töltsd ki az `adat/fogaskerekek.xlsx` fájlt. Ha nincs ilyen, a `python3 minta_excel_keszito.py` készít egy mintát amit kézzel kitölthetsz (későbbi verzióban python excel generátort tervezek egyszerűbb használatért).
+2. Olvasd be az Excelt (a projekt mappájából, bekapcsolt `.venv`-vel):
 ```
    python3 forras/excel_olvaso.py adat/fogaskerekek.xlsx
 ```
-   Ez kiírja a fogaskerekek főbb adatait, és létrehozza a `kimenet/fogaskerekek.json` fájlt. Hibás adat esetén megmondja, melyik sorban mi a hiba.
-3. **A 3D modellek generálása FreeCAD-del:**
+3. Generáld le a modelleket FreeCAD-del:
 ```
    /Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd forras/fogaskerek_generator.py
 ```
-   Más rendszeren a `freecadcmd` elérési útja eltér (azt nem teszteltem).
-4. **Az eredmény** a `kimenet` mappában van: minden kerékhez egy `.FCStd` és egy `.step` fájl. A `.FCStd` a FreeCAD-ben megnyitható (File > Open).
+4. Az eredmény a `kimenet` mappában lesz. Az `.FCStd` fájlt a FreeCAD-ben lehet megnyitni, a `.step` fájlt bármelyik CAD program tudja olvasni.
 
-## Az Excel oszlopai
+## Az Excel táblázat oszlopai
 
-| Oszlop | Jelentés | Egység | Megkötés |
-|---|---|---|---|
-| `nev` | a fogaskerék neve, ez lesz a fájlnév | | kötelező, egyedi |
-| `modul` | fogaskerék modul | mm | pozitív |
-| `fogszam` | fogak száma | db | egész, legalább 8 |
-| `nyomaszog` | kapcsolószög | fok | 10 és 30 között |
-| `szelesseg` | a kerék szélessége (vastagsága) | mm | pozitív |
-| `furat_nevleges` | furat névleges átmérője | mm | pozitív, kisebb a lábkör átmérőjénél |
-| `furat_felso` | furat felső határeltérése | mm | nem kisebb az alsónál |
-| `furat_also` | furat alsó határeltérése | mm | |
-| `turesmod` | melyik méretre modellezzen | | `nevleges`, `kozep`, `min` vagy `max` |
+Minden sor egy fogaskerék. Az oszlopok neve pontosan ez legyen:
 
-A tizedesvessző és a tizedespont is elfogadott.
+- `nev`: a kerék neve, ez lesz a fájl neve is (nem lehet két egyforma)
+- `modul`: a fogak mérete milliméterben (nagyobb modul, nagyobb fogak)
+- `fogszam`: hány foga van a keréknek (legalább 8)
+- `nyomaszog`: a fogak kapcsolószöge fokban, általában 20
+- `szelesseg`: milyen vastag a kerék milliméterben
+- `furat_nevleges`: a középső furat névleges átmérője milliméterben
+- `furat_felso`: a furat tűrésének felső eltérése (pl. 0,015)
+- `furat_also`: a furat tűrésének alsó eltérése (pl. 0)
+- `turesmod`: melyik méretre legyen a furat modellezve, lásd lent
 
-## Tűrésmódok
+## !!A tizedesvessző és a tizedespont is jó.!!
 
-A furat átmérőjét a `turesmod` oszlop határozza meg. Példa: névleges 8 mm, felső eltérés +0,015, alsó eltérés 0:
+## Tűrés
 
-| `turesmod` | Modellezett furatátmérő |
-|---|---|
-| `nevleges` | 8,000 mm |
-| `min` | 8,000 mm (névleges + alsó eltérés) |
-| `max` | 8,015 mm (névleges + felső eltérés) |
-| `kozep` | 8,0075 mm (a tűrésmező közepe) |
+A gyártásban egy méret soha nem lesz pontosan az, ami a rajzon van, ezért megadják, mennyivel lehet kisebb vagy nagyobb. Ezt hívják tűrésnek. A program a furatnál kezeli ezt. A `turesmod` oszlopba ezek egyikét lehet írni:
 
-## Számítások
+- `nevleges`: a névleges méretre modellez
+- `min`: a legkisebb megengedett méretre
+- `max`: a legnagyobb megengedett méretre
+- `kozep`: a tűrésmező közepére
 
-| Méret | Képlet |
-|---|---|
-| osztókör átmérő | d = m · z |
-| fejkör átmérő | da = d + 2m |
-| lábkör átmérő | df = d - 2,5m |
-| alapkör átmérő | db = d · cos(α) |
+Példa: névleges furat 8 mm, felső eltérés +0,015, alsó eltérés 0. Ekkor `nevleges` esetén 8,000 mm, `min` esetén 8,000 mm, `max` esetén 8,015 mm, `kozep` esetén 8,0075 mm lesz a furat.
 
-A fogoldal evolvens görbe, amelyet az alapkörből számol a program az evolvens függvénnyel: inv(α) = tan(α) - α. A fog vastagsága az osztókörön π·m/2. A fogoldalt oldalanként 15 pont írja le, a profil ezek összekötéséből áll.
+## A fogak alakja
 
-## Mappaszerkezet
+A fogaskerék fogainak oldala nem egyenes, hanem **evolvens** görbe. Ezt a görbét úgy kapod, hogy egy cérnát lecsévélsz egy hengerről: a cérna végpontja rajzolja ki az evolvenst. Ilyen fogaknál két kerék egyenletesen gördül egymáson. A programban ezt a `forras/evolvens.py` számolja ki, fogoldalanként 15 pontból.
 
-```
-exceltocad/
-├── README.md
-├── requirements.txt
-├── minta_excel_keszito.py     minta Excel generálása
-├── adat/                      bemeneti Excel fájl
-├── forras/
-│   ├── excel_olvaso.py        Excel beolvasás, ellenőrzés, JSON export
-│   ├── evolvens.py            evolvens fogprofil számítása (tiszta Python)
-│   └── fogaskerek_generator.py  FreeCAD script a 3D testhez
-├── tesztek/                   egységtesztek
-├── kimenet/                   generált JSON, FCStd és STEP fájlok
-└── dokumentacio/              képek és leírások
-```
+A fontosabb méretek:
+
+- osztókör átmérője = modul · fogszám
+- fejkör átmérője (a fogak teteje) = osztókör + 2 · modul
+- lábkör átmérője (a fogárkok alja) = osztókör - 2,5 · modul
+- alapkör átmérője = osztókör · cos(nyomásszög), erről indul az evolvens
+
+## Mappák
+
+- `adat/`: a bemeneti Excel
+- `forras/`: a programok (`excel_olvaso.py`, `evolvens.py`, `fogaskerek_generator.py`)
+- `tesztek/`: az automatikus tesztek
+- `kimenet/`: a program által készített fájlok
+- `dokumentacio/`: képek
 
 ## Tesztek
 
@@ -119,14 +101,11 @@ exceltocad/
 python3 -m unittest discover -s tesztek -p "teszt*.py" -v
 ```
 
-A tesztek az Excel beolvasót (érvényes és hibás adatok, tűrésmódok) és a fogprofilt (sugárhatárok, forgásszimmetria, fogvastagság az osztókörön) ellenőrzik.
+A tesztek ellenőrzik az Excel beolvasást (jó és hibás adatokkal) és a fogprofilt (például hogy a fog vastagsága az osztókörön a szabványos érték, és hogy a kerék szimmetrikus).
 
-## Ismert korlátok
+## Korlátok
 
-- Csak egyenes fogazatú fogaskereket készít.
-- A fogprofil szakaszos vonalakkal közelített, nem sima görbe.
-- A tűrés jelenleg a furat átmérőjére hat.
-- A fogszám legalább 8 lehet.
-- Csak macOS-en tesztelt.
-EOF
-open README.md
+- Csak egyenes fogú fogaskereket készít.
+- A fogak oldala sok kis egyenes szakaszból áll, nem teljesen sima görbe.
+- A fogak tövénél egyszerűsítést használ (nincs lekerekítés), ezért a kisebb fogszámú kerekek fogai tőnél kicsit keskenyebbek.
+- A tűrés csak a furat méretére hat.
