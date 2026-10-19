@@ -29,7 +29,7 @@ Csak macOS-en teszteltem.
 ## Telepítés
 
 ```
-git clone https://github.com/FELHASZNALONEV/exceltocad.git
+git clone https://github.com/hauberbenedek-collab/exceltocad.git
 cd exceltocad
 python3 -m venv .venv
 source .venv/bin/activate
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 ```
 
 ## Használat
-## !!Nagyon fontos a nevek helyessége, ha bármit is átnevezel a kód nem biztos hogy 100%-osan működik!!
+> **Nagyon fontos a nevek helyessége, ha bármit is átnevezel a kód nem biztos hogy 100%-osan működik**
 1. Töltsd ki az `adat/fogaskerekek.xlsx` fájlt. Ha nincs ilyen, a `python3 minta_excel_keszito.py` készít egy mintát amit kézzel kitölthetsz (későbbi verzióban python excel generátort tervezek egyszerűbb használatért).
 2. Olvasd be az Excelt (a projekt mappájából, bekapcsolt `.venv`-vel):
 ```
@@ -63,7 +63,7 @@ Minden sor egy fogaskerék. Az oszlopok neve pontosan ez legyen:
 - `furat_also`: a furat tűrésének alsó eltérése (pl. 0)
 - `turesmod`: melyik méretre legyen a furat modellezve, lásd lent
 
-## !!A tizedesvessző és a tizedespont is jó.!!
+> **A tizedesvessző és a tizedespont is jó.**
 
 ## Tűrés
 
